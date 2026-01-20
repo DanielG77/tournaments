@@ -9,6 +9,7 @@ from core.dependencies import get_tournament_service
 
 router = APIRouter(prefix="/tournaments", tags=["tournaments"])
 
+@router.get("", response_model=List[TournamentResponse])
 @router.get("/", response_model=List[TournamentResponse])
 async def get_tournaments(
     service: TournamentService = Depends(get_tournament_service)
@@ -27,5 +28,3 @@ async def get_tournaments(
             status_code=500,
             detail=f"Internal server error: {str(e)}"
         )
-
-# Add more endpoints as needed

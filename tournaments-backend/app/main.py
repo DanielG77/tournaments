@@ -1,93 +1,55 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import asyncpg
-from typing import Any
-from uuid import UUID
-import datetime
+from api.routers import tournaments
+from api.routers.dashboard_player import players, teams, pokemon
+from api.routers.dashboard_coach import coach
 
-app = FastAPI(title="Tournaments - Minimal API")
+from infrastructure.database.connection import DatabaseConnection
+from config.settings import settings
 
-# ---------------------
-# Configuración CORS
-# ---------------------
-origins = [
-    "http://localhost:5173",  # frontend
-]
+async def lifespan(app: FastAPI):
+    # Startup: inicializa la pool
+    await DatabaseConnection.get_pool()
+    yield
+    # Shutdown: cierra la pool
+    await DatabaseConnection.close_pool()
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    debug=settings.DEBUG,
+    redirect_slashes=False,   # ⚠️ importante
+    lifespan=lifespan
+)
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.CORS_ORIGINS,  # lista de orígenes permitidos
     allow_credentials=True,
-    allow_methods=["*"],  # GET, POST, etc.
-    allow_headers=["*"],  # Content-Type, Authorization
+    allow_methods=["*"],     # o los métodos que necesites
+    allow_headers=["*"],     # o los headers que necesites
 )
 
-# ---------------------
-# Configuración DB
-# ---------------------
-DATABASE_CONFIG = {
-    "user": "postgres",
-    "password": ".",
-    "database": "test_tournaments",
-    "host": "localhost",
-    "port": 5432,
-}
+# DEBUG LOG para CORS
+print("DEBUG – CORS_ORIGINS raw:", settings.CORS_ORIGINS)
+print("DEBUG – type of CORS_ORIGINS:", type(settings.CORS_ORIGINS))
 
-@app.on_event("startup")
-async def startup():
-    """Crear pool de conexiones al iniciar la app"""
-    try:
-        app.state.pool = await asyncpg.create_pool(
-            user=DATABASE_CONFIG["user"],
-            password=DATABASE_CONFIG["password"],
-            database=DATABASE_CONFIG["database"],
-            host=DATABASE_CONFIG["host"],
-            port=DATABASE_CONFIG["port"],
-            min_size=1,
-            max_size=5,
-        )
-    except Exception as e:
-        app.state.pool = None
-        raise
+# Include routers
+app.include_router(players.router)
+app.include_router(teams.router)
+app.include_router(pokemon.router)
+app.include_router(tournaments.router)
+app.include_router(coach.router)
 
-@app.on_event("shutdown")
-async def shutdown():
-    """Cerrar pool al apagar la app"""
-    pool = getattr(app.state, "pool", None)
-    if pool is not None:
-        await pool.close()
+@app.get("/")
+async def root():
+    return {
+        "message": "Tournaments API",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "redoc": "/redoc"
+    }
 
-# ---------------------
-# Serializadores
-# ---------------------
-def _serialize_value(v: Any) -> Any:
-    if v is None:
-        return None
-    if isinstance(v, UUID):
-        return str(v)
-    if isinstance(v, (datetime.datetime, datetime.date)):
-        return v.isoformat()
-    return v
-
-def _serialize_record(record: asyncpg.Record) -> dict:
-    return {k: _serialize_value(record[k]) for k in record.keys()}
-
-# ---------------------
-# Endpoints
-# ---------------------
-@app.get("/tournaments")
-async def get_tournaments():
-    pool = getattr(app.state, "pool", None)
-    if pool is None:
-        raise HTTPException(status_code=500, detail="No hay conexión a la base de datos")
-
-    async with pool.acquire() as conn:
-        rows = await conn.fetch("SELECT * FROM tournaments;")
-    return [_serialize_record(r) for r in rows]
-
-# ---------------------
-# Run con python main.py
-# ---------------------
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "database": "connected"}

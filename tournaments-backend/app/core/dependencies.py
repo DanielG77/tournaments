@@ -1,4 +1,5 @@
 from typing import Generator
+from fastapi import Depends  # <- Agregado
 from infrastructure.repositories.tournament_repository_impl import TournamentRepositoryImpl
 from application.services.tournament_service import TournamentService
 
