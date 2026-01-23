@@ -5,11 +5,13 @@ from typing import Optional
 
 class TournamentBase(BaseModel):
     name: str
-    start_at: datetime
+    start_at: Optional[datetime] = None      # <-- opcional
     end_date: Optional[datetime] = None
     location: Optional[str] = None
-    price_client: Optional[float] = None  # Para numeric(10,2) - precio público
-    price_player: Optional[float] = None  # Para numeric(10,2) - precio para jugadores
+    price_client: Optional[float] = None
+    price_player: Optional[float] = None
+
+
 
 class TournamentCreate(TournamentBase):
     pass
@@ -23,7 +25,7 @@ class TournamentUpdate(BaseModel):
 
 class TournamentResponse(TournamentBase):
     id: UUID
-    created_at: datetime
+    created_at: Optional[datetime] = None    # <-- opcional si DB puede tener NULL
     updated_at: Optional[datetime] = None
     is_active: bool
 

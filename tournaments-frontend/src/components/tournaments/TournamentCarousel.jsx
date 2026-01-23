@@ -10,7 +10,7 @@ const TournamentCarousel = () => {
 
     // Usar torneos activos para el carrusel
     const activeTournaments = tournaments.filter(t => t.is_active);
-
+    console.log('Torneos activos para el carrusel:', activeTournaments);
     const nextSlide = () => {
         setCurrentIndex((prevIndex) =>
             prevIndex === activeTournaments.length - 1 ? 0 : prevIndex + 1
@@ -213,7 +213,7 @@ const TournamentCarousel = () => {
                     onClick={() => setIsAutoPlaying(!isAutoPlaying)}
                     className="text-sm text-gray-500 hover:text-gray-300 transition-colors flex items-center justify-center gap-2 mx-auto"
                 >
-                    {isAutoPlaying ? '⏸️ Pausar' : '▶️ Reanudar'} auto-play
+                    {/* {isAutoPlaying ? '⏸️ Pausar' : '▶️ Reanudar'} auto-play */}
                 </button>
             </div>
         </div>

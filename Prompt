@@ -1,0 +1,233 @@
+Crea un proyecto Spring Boot 3.x con arquitectura Clean que incluya:
+
+1. ESTRUCTURA DE PAQUETES:
+src/main/java/com/tournaments/
+├── application/ # Capa de aplicación
+│ ├── services/ # Servicios de aplicación
+│ ├── dto/ # DTOs de aplicación
+│ └── ports/ # Puertos (interfaces)
+├── domain/ # Capa de dominio
+│ ├── models/ # Entidades de dominio
+│ ├── repositories/ # Interfaces de repositorio
+│ └── valueobjects/ # Objetos de valor
+├── infrastructure/ # Capa de infraestructura
+│ ├── config/ # Configuraciones
+│ ├── persistence/ # Implementación JPA
+│ │ ├── entities/ # Entidades JPA
+│ │ ├── repositories/ # Repositorios JPA
+│ │ └── migrations/ # Migraciones Flyway
+│ └── web/ # Controladores REST
+└── shared/ # Utilidades compartidas
+└── exceptions/ # Excepciones globales
+
+
+2. BASE DE DATOS:
+- PostgreSQL 16 en puerto 5432
+- Configuración en application.yml:
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/test_tournaments
+    username: postgres
+    password: .
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+    MIGRACIONES FLYWAY:
+
+Crear archivos V1__initial_schema.sql, V2__seed_data.sql en src/main/resources/db/migration
+
+Incluir TODAS las tablas proporcionadas en el esquema SQL
+
+Agregar índices necesarios
+
+Usar tipos ENUM (tournament_status, entity_status, registration_status)
+
+<dependencies>
+    <!-- Spring Boot Starters -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    
+    <!-- Database -->
+    <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-core</artifactId>
+    </dependency>
+    
+    <!-- Utilities -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
+    <dependency>
+        <groupId>com.fasterxml.jackson.datatype</groupId>
+        <artifactId>jackson-datatype-jsr310</artifactId>
+    </dependency>
+</dependencies>
+
+
+@Configuration
+public class CorsConfig {
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/api/**")
+                    .allowedOrigins("http://localhost:3000", "http://localhost:5173")
+                    .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                    .allowedHeaders("*")
+                    .allowCredentials(true)
+                    .maxAge(3600);
+            }
+        };
+    }
+}
+
+DOCKERIZACIÓN:
+
+Dockerfile para Spring Boot:
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+docker-compose.yml:
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tournaments_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: .
+      POSTGRES_DB: test_tournaments
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/main/resources/db/migration:/docker-entrypoint-initdb.d
+    networks:
+      - tournaments_network
+
+  backend:
+    build: .
+    container_name: tournaments_backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/test_tournaments
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - tournaments_network
+
+volumes:
+  postgres_data:
+
+networks:
+  tournaments_network:
+    driver: bridge
+
+REQUISITOS ESPECÍFICOS:
+
+Usar Java 21
+
+Todas las entidades JPA deben incluir:
+
+@MappedSuperclass con campos base (id, createdAt, updatedAt)
+
+Soft delete con @Where(clause = "is_active = true")
+
+Listeners para updatedAt automático
+
+Patrón Repository con Spring Data JPA
+
+DTOs separados para Request/Response
+
+Validación con @Valid
+
+Manejo global de excepciones con @ControllerAdvice
+
+Todos los endpoints bajo /api/v1/
+
+Paginación en endpoints GET que devuelven listas
+
+Logging con SLF4J
+
+ENDPOINTS MÍNIMOS PARA CADA ENTIDAD:
+
+GET /api/v1/tournaments (paginado)
+
+GET /api/v1/tournaments/{id}
+
+POST /api/v1/tournaments
+
+PUT /api/v1/tournaments/{id}
+
+DELETE /api/v1/tournaments/{id} (soft delete)
+
+CRUD completo para: Users, Teams, PokemonTeams, TournamentsParticipants
+
+CARACTERÍSTICAS AVANZADAS:
+
+Transacciones @Transactional en servicios
+
+Consultas con Criteria API para filtros complejos
+
+Proyecciones DTO nativas de Spring Data
+
+Cache de segundo nivel con Hibernate
+
+Health checks con Spring Boot Actuator
+
+OpenAPI 3.0 con Swagger UI
+
+SCRIPT DE EJECUCIÓN:
+
+# Construir y ejecutar con Docker
+docker-compose up --build
+
+IMPORTANTE: Genera código completo y funcional con:
+
+Anotaciones Lombok (@Data, @Builder, @AllArgsConstructor, etc.)
+
+Mappers con MapStruct (configuración incluida)
+
+Tests unitarios con JUnit 5 y Mockito
+
+Tests de integración con @DataJpaTest
+
+Configuración de logging en application.yml
+
+Archivos .gitignore apropiados

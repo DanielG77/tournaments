@@ -4,6 +4,7 @@ from pathlib import Path
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
+from datetime import timedelta
 
 # Obtener la ruta base del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,6 +17,12 @@ class Settings(BaseSettings):
     db_port: int = Field(5432, env="DB_PORT")
     db_min_size: int = Field(1, env="DB_MIN_SIZE")
     db_max_size: int = Field(10, env="DB_MAX_SIZE")
+    
+    JWT_SECRET_KEY: str = Field(..., env="JWT_SECRET_KEY")
+    JWT_REFRESH_SECRET_KEY: str = Field(..., env="JWT_REFRESH_SECRET_KEY")
+    JWT_ALGORITHM: str = Field("HS256", env="JWT_ALGORITHM")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(60, env="ACCESS_TOKEN_EXPIRE_MINUTES")
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(7, env="REFRESH_TOKEN_EXPIRE_DAYS")
 
     DATABASE_URL: Optional[str] = Field(None, env="DATABASE_URL")
     POKEAPI_BASE_URL: str = "https://pokeapi.co/api/v2"

@@ -30,9 +30,11 @@ class TournamentRepositoryImpl(TournamentRepository):
             id=row['id'],
             name=row['name'],
             start_at=row['start_at'],
-            end_date=row.get('end_at'),          # <-- usar la columna real de la BD
+            end_date=row.get('end_at'),
             location=row.get('location'),
             created_at=row.get('created_at'),
+            price_client=row.get('price_client'),
+            price_player=row.get('price_player')
         )
 
         # Adjuntamos el flag almacenado en la BD para que el serializador lo incluya.

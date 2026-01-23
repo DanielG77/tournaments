@@ -28,7 +28,7 @@ def get_player_service():
 def get_current_user_id() -> UUID:
     # Por ahora, devolvemos un ID hardcodeado
     # En producción, extraer de JWT token
-    return UUID("11111111-1111-4111-8111-111111111111")
+    return UUID("22222222-2222-2222-2222-222222222222")
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_player(
