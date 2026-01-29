@@ -74,10 +74,15 @@ const Header = () => {
                                     <Link to="/admin" className="text-sm text-lol-gold hover:underline">Admin</Link>
                                 )}
                                 {user.role === 'coach' && (
-                                    <Link to="/coach" className="text-sm text-cs-orange hover:underline">Coach</Link>
+                                    <Link
+                                        to={`/coach/${user.id}`}
+                                        className="text-sm text-cs-orange hover:underline"
+                                    >
+                                        Coach
+                                    </Link>
                                 )}
                                 {user.role === 'player' && (
-                                    <Link to="/perfil" className="text-sm text-pokemon-yellow hover:underline">Perfil</Link>
+                                    <Link to={`/perfil/${user.id}`} className="text-sm text-pokemon-yellow hover:underline">Perfil</Link>
                                 )}
                                 <button
                                     onClick={handleLogout}

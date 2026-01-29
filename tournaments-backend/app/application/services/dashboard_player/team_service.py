@@ -10,6 +10,22 @@ from application.schemas.dashboard_player.team import (
 from application.schemas.dashboard_player.pokemon import PokemonResponse
 from domain.entities.dashboard_player.team import Team, PokemonTeamMember as PokemonTeamMemberEntity
 
+from core.exceptions import (
+    NotFoundError,
+    ForbiddenError,
+    ValidationError
+)
+from infrastructure.external.pokeapi_client import (
+    PokeAPIClient,
+    PokeAPINotFound
+)
+from infrastructure.repositories.dashboard_player.pokemon_team_repository_impl import (
+    PokemonTeamRepositoryImpl
+)
+from infrastructure.repositories.dashboard_player.pokemon_team_member_repository_impl import (
+    PokemonTeamMemberRepositoryImpl
+)
+
 class TeamService:
     def __init__(
         self,
@@ -313,3 +329,113 @@ class TeamService:
             return PokemonResponse(**pokemon_data)
         except Exception:
             return None
+
+# src/application/services/dashboard_player/team_service.py
+MAX_MOVES = 4
+MAX_EV_TOTAL = 510
+MAX_EV_STAT = 252
+
+
+class PokemonTeamService:
+
+    def __init__(self):
+        self.team_repo = PokemonTeamRepositoryImpl()
+        self.member_repo = PokemonTeamMemberRepositoryImpl()
+        self.pokeapi = PokeAPIClient()
+
+    # ---------- Teams ----------
+
+    async def list_my_teams(self, user_id: UUID):
+        return await self.team_repo.list_teams_by_owner(user_id)
+
+    async def create_team(self, user_id: UUID, name: str, is_public: bool):
+        return await self.team_repo.create_team(user_id, name, is_public)
+
+    async def delete_team(self, user_id: UUID, team_id: UUID):
+        team = await self.team_repo.get_team_by_id(team_id)
+        if not team:
+            raise NotFoundError("Pokémon team not found")
+
+        if team["owner_user_id"] != user_id:
+            raise ForbiddenError("You do not own this team")
+
+        await self.team_repo.delete_team(team_id)
+
+    # ---------- Members ----------
+
+    async def add_member(
+        self,
+        user_id: UUID,
+        team_id: UUID,
+        payload: dict
+    ):
+        team = await self.team_repo.get_team_by_id(team_id)
+        if not team:
+            raise NotFoundError("Pokémon team not found")
+
+        if team["owner_user_id"] != user_id:
+            raise ForbiddenError("You do not own this team")
+
+        # ---- Validate Pokémon exists ----
+        try:
+            pokemon_data = await self.pokeapi.get_pokemon(payload["pokemon_id"])
+            species_data = await self.pokeapi.get_pokemon_species(
+                pokemon_data["species"]["name"]
+            )
+        except PokeAPINotFound:
+            raise ValidationError("Invalid Pokémon ID")
+
+        payload["species_id"] = species_data["id"]
+
+        # ---- Validate moves ----
+        moves = payload.get("moves", [])
+        if len(moves) > MAX_MOVES:
+            raise ValidationError("A Pokémon can only have 4 moves")
+
+        # ---- Validate EVs ----
+        evs = payload.get("evs", {})
+        total_evs = sum(evs.values())
+        if total_evs > MAX_EV_TOTAL:
+            raise ValidationError("Total EVs cannot exceed 510")
+
+        for stat, value in evs.items():
+            if value > MAX_EV_STAT:
+                raise ValidationError(f"EV {stat} exceeds max value (252)")
+
+        # ---- Persist ----
+        return await self.member_repo.add_member(team_id, payload)
+
+    async def update_member(
+        self,
+        user_id: UUID,
+        member_id: int,
+        payload: dict
+    ):
+        member = await self.member_repo.get_member(member_id)
+        if not member:
+            raise NotFoundError("Pokémon team member not found")
+
+        team = await self.team_repo.get_team_by_id(member["pokemon_team_id"])
+        if team["owner_user_id"] != user_id:
+            raise ForbiddenError("You do not own this team")
+
+        if "moves" in payload and len(payload["moves"]) > MAX_MOVES:
+            raise ValidationError("A Pokémon can only have 4 moves")
+
+        if "evs" in payload:
+            total = sum(payload["evs"].values())
+            if total > MAX_EV_TOTAL:
+                raise ValidationError("Total EVs cannot exceed 510")
+
+        await self.member_repo.update_member(member_id, payload)
+
+    async def delete_member(self, user_id: UUID, member_id: int):
+        member = await self.member_repo.get_member(member_id)
+        if not member:
+            raise NotFoundError("Pokémon team member not found")
+
+        team = await self.team_repo.get_team_by_id(member["pokemon_team_id"])
+        if team["owner_user_id"] != user_id:
+            raise ForbiddenError("You do not own this team")
+
+        await self.member_repo.delete_member(member_id)

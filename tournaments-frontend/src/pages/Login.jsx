@@ -23,14 +23,18 @@ export default function AuthPage() {
     const [regLoading, setRegLoading] = useState(false);
     const [regError, setRegError] = useState(null);
 
-    // Redirect if already logged in
     useEffect(() => {
         if (user) {
-            if (user.role === "admin") navigate("/admin");
-            else if (user.role === "coach") navigate("/coach");
-            else navigate("/perfil");
+            if (user.role === "admin") {
+                navigate("/admin");
+            } else if (user.role === "coach") {
+                navigate(`/coach/${user.id}`);
+            } else {
+                navigate(`/perfil/${user.id}`);
+            }
         }
     }, [user, navigate]);
+
 
     const handleLogin = async (e) => {
         e.preventDefault();

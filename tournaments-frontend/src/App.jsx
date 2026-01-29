@@ -1,22 +1,21 @@
-// src/App.jsx
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { TournamentProvider } from './contexts/TournamentContext';
 import { UserProvider } from './contexts/UserContext';
-import ProtectedRoute from './components/common/ProtectedRoute'; // Importar ProtectedRoute
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 
 import Home from './pages/Home';
+import TournamentDetail from './pages/TournamentDetail';
 import PlayerDashboard from './pages/PlayerDashboard';
-import CoachDashboard from './pages/coach_Dashboard';
+import CoachDashboard from './pages/CoachDashboard';
+import CoachPlayersPage from './pages/CoachPlayersPage'; // Nueva importación
 import AdminDashboard from './pages/AdminDashboard';
-import Login from './pages/Login'; // Crear esta página
-// import Home from './pages/Home';
-// import PlayerDashboard from './pages/PlayerDashboard';
-// import CoachDashboard from './pages/coach_Dashboard';
-// import AdminDashboard from './pages/AdminDashboard'; // ⬅️ NUEVO
+import Login from './pages/Login';
+import PokemonTeamManager from './pages/PokemonTeamManager';
+
 function App() {
   return (
     <BrowserRouter>
@@ -28,19 +27,26 @@ function App() {
             <main className="container mx-auto px-4 py-8">
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/tournaments/:id" element={<TournamentDetail />} />
                 <Route path="/login" element={<Login />} />
-                {/* <Route path="/register" element={<Register />} /> */}
 
                 {/* Rutas protegidas */}
-                <Route path="/perfil" element={
+                <Route path="/perfil/:id" element={
                   <ProtectedRoute>
                     <PlayerDashboard />
                   </ProtectedRoute>
                 } />
 
-                <Route path="/coach" element={
+                <Route path="/coach/:id" element={
                   <ProtectedRoute role="coach">
                     <CoachDashboard />
+                  </ProtectedRoute>
+                } />
+
+                {/* Nueva ruta para el listado de jugadores del coach */}
+                <Route path="/coach/:id/players" element={
+                  <ProtectedRoute role="coach">
+                    <CoachPlayersPage />
                   </ProtectedRoute>
                 } />
 

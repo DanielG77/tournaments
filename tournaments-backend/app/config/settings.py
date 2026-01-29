@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     db_min_size: int = Field(1, env="DB_MIN_SIZE")
     db_max_size: int = Field(10, env="DB_MAX_SIZE")
     
+    # Configuración de Redis
+    redis_url: str = Field("redis://localhost:6379/0", env="REDIS_URL")
+    
     JWT_SECRET_KEY: str = Field(..., env="JWT_SECRET_KEY")
     JWT_REFRESH_SECRET_KEY: str = Field(..., env="JWT_REFRESH_SECRET_KEY")
     JWT_ALGORITHM: str = Field("HS256", env="JWT_ALGORITHM")

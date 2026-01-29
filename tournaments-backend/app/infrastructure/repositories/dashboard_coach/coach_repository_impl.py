@@ -1,7 +1,9 @@
 from typing import List, Optional
 from uuid import UUID
-from infrastructure.database.connection import DatabaseConnection
 import asyncpg
+from asyncpg import exceptions as pg_exceptions
+
+from infrastructure.database.connection import DatabaseConnection
 
 class CoachRepositoryImpl:
     pool = DatabaseConnection  # asumes DatabaseConnection.get_pool() inicializado
@@ -124,3 +126,88 @@ class CoachRepositoryImpl:
                 ORDER BY t.start_at DESC
             """, str(team_id))
             return [dict(r) for r in rows]
+
+    async def create_team(self, name: str, owner_user_id: UUID, coach_user_id: UUID) -> dict:
+        sql = """
+        INSERT INTO teams (name, owner_user_id, coach_user_id)
+        VALUES ($1, $2, $3)
+        RETURNING id, name, status, is_active, owner_user_id, coach_user_id, created_at
+        """
+        async with DatabaseConnection.get_connection() as conn:
+            row = await conn.fetchrow(sql, name, owner_user_id, coach_user_id)
+            if not row:
+                return None
+            team = dict(row)
+            # Añadimos players_count para que el response_model no falle
+            team["players_count"] = 0
+            return team
+
+    async def search_users(self, limit: int = 20, offset: int = 0) -> List[dict]:
+        """
+        Obtiene listado COMPLETO de jugadores con perfil (INNER JOIN).
+        """
+        sql = """
+        SELECT u.id::text as user_id, u.email, p.nickname
+        FROM users u
+        INNER JOIN player_profiles p ON p.user_id = u.id
+        ORDER BY COALESCE(p.nickname, u.email) ASC
+        LIMIT $1 OFFSET $2
+        """
+        
+        async with DatabaseConnection.get_connection() as conn:
+            rows = await conn.fetch(sql, limit, offset)
+            results = []
+            for r in rows:
+                user = {
+                    "user_id": UUID(r["user_id"]),
+                    "email": r["email"],
+                    "nickname": r["nickname"],
+                    "game_accounts": []
+                }
+                # obtener game accounts del usuario
+                gac_sql = """
+                SELECT id, game_key, platform, platform_account_id, display_name, status, is_active
+                FROM user_game_accounts
+                WHERE user_id = $1
+                """
+                gac_rows = await conn.fetch(gac_sql, user["user_id"])
+                gas = []
+                for g in gac_rows:
+                    gas.append({
+                        "id": g["id"],
+                        "game_key": g["game_key"],
+                        "platform": g["platform"],
+                        "platform_account_id": g["platform_account_id"],
+                        "display_name": g["display_name"],
+                        "status": g["status"],
+                        "is_active": g["is_active"],
+                    })
+                user["game_accounts"] = gas
+                results.append(user)
+            return results
+
+    async def is_team_coach(self, team_id: UUID, coach_user_id: UUID) -> bool:
+        sql = "SELECT coach_user_id FROM teams WHERE id = $1"
+        async with DatabaseConnection.get_connection() as conn:
+            row = await conn.fetchrow(sql, team_id)
+            if not row:
+                return False
+            current = row["coach_user_id"]
+            # puede ser None
+            return current is not None and str(current) == str(coach_user_id)
+
+    async def add_team_member(self, team_id: UUID, user_id: UUID, role: str = "member") -> bool:
+        sql = """
+        INSERT INTO team_members (team_id, user_id, role)
+        VALUES ($1, $2, $3)
+        """
+        async with DatabaseConnection.get_connection() as conn:
+            try:
+                await conn.execute(sql, team_id, user_id, role)
+                return True
+            except pg_exceptions.UniqueViolationError:
+                # ya era miembro
+                return False
+            except Exception as e:
+                # otros errores
+                raise e

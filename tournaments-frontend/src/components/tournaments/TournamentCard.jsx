@@ -2,6 +2,7 @@
 import React from 'react';
 import { Trophy, Calendar, Users, Clock, Gamepad2, DollarSign } from 'lucide-react';
 import { useTournaments } from '../../contexts/TournamentContext';
+import { useNavigate } from 'react-router-dom';
 
 const getStatusColor = (status) => {
     switch (status) {
@@ -69,23 +70,27 @@ const getGameTheme = (tournamentName) => {
 
 const TournamentCard = ({ tournament }) => {
     const { updateTournamentStatus } = useTournaments();
+    const navigate = useNavigate();
     const theme = getGameTheme(tournament.name);
+
 
     // Formatear fechas
     const startDate = tournament.start_at ? new Date(tournament.start_at) : null;
     const endDate = tournament.end_at ? new Date(tournament.end_at) : null;
     const isActive = tournament.is_active;
-
-    // Manejar clic en botón
+    // console.log(tournament);
     const handleButtonClick = () => {
-        if (tournament.status === 'published') {
-            // Lógica para inscripción
-            console.log('Inscribirse al torneo:', tournament.id);
-        } else if (tournament.status === 'draft') {
-            // Cambiar de borrador a publicado (esto sería mejor en un admin panel)
-            updateTournamentStatus(tournament.id, 'published');
-        }
+        // if (tournament.status === 'draft') {
+        //     navigate(`/tournaments/${tournament.id}?action=register`);
+        // }
+        // else if (tournament.status === 'open') {
+        //     updateTournamentStatus(tournament.id, 'published');
+        // }
+        // else {
+        navigate(`/tournaments/${tournament.id}`);
+        // }
     };
+
 
     return (
         <div className="group relative">

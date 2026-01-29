@@ -21,8 +21,27 @@ export const adminTournamentsAPI = {
 
 // ---- TEAMS ----
 export const adminTeamsAPI = {
-    list: (skip = 0, limit = 50) =>
-        api.get('/admin/teams/').then(r => r.data),
+    list: async () => {
+        const res = await api.get('/admin/teams/');
+        return res.data;
+    },
+    // GET team detail
+    getTeam: async (teamId) => {
+        const res = await api.get(`/admin/teams/${teamId}`);
+        return res.data;
+    },
+    addMember: async (teamId, userId, role = 'member') => {
+        // ahora enviamos body JSON
+        const res = await api.post(`/admin/teams/${teamId}/members`, { user_id_to_add: userId, role });
+        return res.data;
+    },
+    removeMember: async (teamId, userId) => {
+        await api.delete(`/admin/teams/${teamId}/members/${userId}`);
+    },
+    updateMemberStatus: async (teamId, userId, status) => {
+        const res = await api.put(`/admin/teams/${teamId}/members/${userId}/status`, { status });
+        return res.data;
+    },
 
     get: (id) =>
         api.get(`/admin/teams/${id}`).then(r => r.data),
@@ -33,13 +52,13 @@ export const adminTeamsAPI = {
     deactivate: (id) =>
         api.delete(`/admin/teams/${id}`),
 
-    addMember: (teamId, userId, role = 'member') =>
-        api.post(`/admin/teams/${teamId}/members`, null, {
-            params: { user_id_to_add: userId, role }
-        }),
+    // addMember: (teamId, userId, role = 'member') =>
+    //     api.post(`/admin/teams/${teamId}/members`, null, {
+    //         params: { user_id_to_add: userId, role }
+    //     }),
 
-    removeMember: (teamId, memberId) =>
-        api.delete(`/admin/teams/${teamId}/members/${memberId}`)
+    // removeMember: (teamId, memberId) =>
+    //     api.delete(`/admin/teams/${teamId}/members/${memberId}`)
 };
 
 // ---- REGISTRATIONS ----

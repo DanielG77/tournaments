@@ -8,6 +8,15 @@ import {
 
 // AdminDashboard.jsx - panelized admin UI that uses most admin endpoints
 // Single-file component for quick integration. Tailwind utility classes used.
+function fmtDate(d) {
+    if (!d) return '';
+    try {
+        return new Date(d).toLocaleString();
+    } catch {
+        return String(d);
+    }
+}
+
 
 export default function AdminDashboard() {
     // Data
@@ -97,9 +106,24 @@ export default function AdminDashboard() {
 
     // ----------------- TEAMS -----------------
     async function openTeam(team) {
-        setSelectedTeam(team);
-        setActivePanel('teams');
+        try {
+            setLoading(true);
+            const fullTeam = await adminTeamsAPI.getTeam(team.id); // <-- Trae miembros
+            if (!fullTeam) {
+                console.warn('Team not found', team.id);
+                setSelectedTeam(null);
+            } else {
+                setSelectedTeam(fullTeam);
+                setActivePanel('teams');
+            }
+        } catch (err) {
+            console.error('Error loading team detail', err);
+            setSelectedTeam(null);
+        } finally {
+            setLoading(false);
+        }
     }
+
 
     async function submitAddMember(e) {
         e.preventDefault();
@@ -168,6 +192,32 @@ export default function AdminDashboard() {
             console.error('Error fetching player', err);
         }
     }
+
+    async function handleChangeMemberStatus(teamId, userId, newStatus) {
+        if (!confirm(`¿Cambiar estado del miembro a ${newStatus}?`)) return;
+
+        try {
+            setLoading(true);
+            // Llamada al backend para cambiar el status
+            await adminTeamsAPI.updateMemberStatus(teamId, userId, newStatus);
+
+            // Refrescar solo el equipo seleccionado
+            if (selectedTeam && selectedTeam.id === teamId) {
+                const fullTeam = await adminTeamsAPI.getTeam(teamId);
+                setSelectedTeam(fullTeam || null);
+            }
+
+            // Opcional: refrescar lista de equipos si necesitas actualizar conteos
+            const updatedTeams = await adminTeamsAPI.list();
+            setTeams(updatedTeams || []);
+        } catch (err) {
+            console.error('Error updating member status', err);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+
 
     // ----------------- UI -----------------
     return (
@@ -254,48 +304,94 @@ export default function AdminDashboard() {
                         </section>
                     )}
 
-                    {/* TEAMS */}
+                    {/* TEAMS PANEL */}
                     {activePanel === 'teams' && (
                         <section>
-                            <h2 className="text-xl font-semibold mb-4">Equipos</h2>
-                            <div className="grid grid-cols-1 gap-3">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-semibold">Equipos</h2>
+                            </div>
+
+                            <div className="space-y-3">
+                                {teams.length === 0 && <div className="text-gray-300">No hay equipos.</div>}
                                 {teams.map(team => (
                                     <div key={team.id} className="bg-gray-800 p-3 rounded">
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <div className="font-semibold">{team.name}</div>
-                                                <div className="text-sm text-gray-300">ID: {team.id}</div>
+                                                <div className="text-sm text-gray-400">{team.id}</div>
                                             </div>
+
                                             <div className="space-x-2">
-                                                <button onClick={() => openTeam(team)} className="px-2 py-1 rounded bg-blue-600">Ver</button>
-                                                <button onClick={() => deactivateTeam(team.id)} className="px-2 py-1 rounded bg-red-600">Desactivar</button>
+                                                <button
+                                                    onClick={() => openTeam(team)}
+                                                    className="px-2 py-1 bg-blue-600 rounded"
+                                                >
+                                                    Ver
+                                                </button>
+                                                <button
+                                                    onClick={() => deactivateTeam(team.id)}
+                                                    className="px-2 py-1 bg-red-600 rounded"
+                                                >
+                                                    Desactivar
+                                                </button>
                                             </div>
                                         </div>
 
-                                        {selectedTeam && selectedTeam.id === team.id && (
-                                            <div className="mt-3 border-t border-gray-700 pt-3">
-                                                <h4 className="font-semibold mb-2">Miembros</h4>
-                                                <ul className="space-y-1 mb-3">
-                                                    {(team.members || []).map(m => (
-                                                        <li key={m.id} className="flex justify-between items-center">
-                                                            <div>{m.user_name || m.user_id} <span className="text-sm text-gray-400">({m.role})</span></div>
-                                                            <button onClick={() => removeMember(team.id, m.id)} className="px-2 py-1 rounded bg-red-600">Quitar</button>
-                                                        </li>
-                                                    ))}
-                                                </ul>
+                                        {/* MEMBERS LIST - only visible if selectedTeam matches */}
+                                        {selectedTeam?.id === team.id && (
+                                            <div className="mt-4 border-t border-gray-700 pt-3">
+                                                <h4 className="font-semibold mb-2">
+                                                    Miembros ({selectedTeam.members?.length || 0})
+                                                </h4>
 
-                                                <form onSubmit={submitAddMember} className="flex gap-2">
-                                                    <input required placeholder="User ID" value={memberToAdd.userId} onChange={e => setMemberToAdd({ ...memberToAdd, userId: e.target.value })} className="p-2 rounded bg-gray-800" />
-                                                    <select value={memberToAdd.role} onChange={e => setMemberToAdd({ ...memberToAdd, role: e.target.value })} className="p-2 rounded bg-gray-800">
-                                                        <option value="member">member</option>
-                                                        <option value="captain">captain</option>
-                                                        <option value="coach">coach</option>
-                                                    </select>
-                                                    <button type="submit" className="px-3 py-1 rounded bg-green-600">Agregar</button>
-                                                </form>
+                                                {(selectedTeam.members && selectedTeam.members.length > 0) ? (
+                                                    <ul className="space-y-2">
+                                                        {selectedTeam.members.map(m => (
+                                                            <li key={m.user_id} className="flex justify-between items-center">
+                                                                <div>
+                                                                    <div className="font-medium">{m.user_name || m.user_id}</div>
+                                                                    <div className="text-sm text-gray-400">Role: {m.role || 'member'}</div>
+                                                                    <div className="text-xs text-gray-500">
+                                                                        Joined: {fmtDate(m.joined_at)} {m.left_at ? ` — Left: ${fmtDate(m.left_at)}` : ''}
+                                                                    </div>
+                                                                    {m.requested_at && <div className="text-xs text-gray-400">Requested: {fmtDate(m.requested_at)}</div>}
+                                                                    <div className="text-xs text-gray-500">Estado: {m.status}</div>
+                                                                </div>
+
+                                                                <div className="flex gap-2">
+                                                                    {/* only show accept/reject when pending */}
+                                                                    {m.status === 'pending' && (
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => handleChangeMemberStatus(team.id, m.user_id, 'active')}
+                                                                                className="px-2 py-1 bg-green-600 rounded"
+                                                                            >
+                                                                                Aceptar
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleChangeMemberStatus(team.id, m.user_id, 'rejected')}
+                                                                                className="px-2 py-1 bg-red-600 rounded"
+                                                                            >
+                                                                                Rechazar
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                    {/* show remove always */}
+                                                                    <button
+                                                                        onClick={() => removeMember(team.id, m.user_id)}
+                                                                        className="px-2 py-1 bg-gray-700 rounded"
+                                                                    >
+                                                                        Quitar
+                                                                    </button>
+                                                                </div>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <div className="text-sm text-gray-300">No hay miembros en este equipo.</div>
+                                                )}
                                             </div>
                                         )}
-
                                     </div>
                                 ))}
                             </div>
@@ -354,7 +450,6 @@ export default function AdminDashboard() {
                             </div>
                         </section>
                     )}
-
                 </main>
             </div>
         </div>

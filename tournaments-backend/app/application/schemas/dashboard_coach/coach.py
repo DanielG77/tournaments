@@ -25,6 +25,18 @@ class TeamShort(BaseModel):
     is_active: bool
     players_count: int
 
+class TeamCreateRequest(BaseModel):
+    name: str
+
+class TeamCreateResponse(BaseModel):
+    id: UUID
+    name: str
+    status: str
+    is_active: bool
+    owner_user_id: Optional[UUID]
+    coach_user_id: Optional[UUID]
+    created_at: datetime
+
 class TeamDetail(TeamShort):
     owner_user_id: Optional[UUID]
     coach_user_id: Optional[UUID]
@@ -36,3 +48,7 @@ class TournamentSummary(BaseModel):
     start_at: Optional[datetime]
     end_at: Optional[datetime]
     participation_status: Optional[str]
+
+class AddPlayerPayload(BaseModel):
+    user_id: UUID
+    role: Optional[str] = "member"

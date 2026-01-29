@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Play, Trophy, Zap, DollarSign, Users } from 'lucide-react';
 import { useTournaments } from '../../contexts/TournamentContext';
+import { useNavigate } from 'react-router-dom';
 
 const TournamentCarousel = () => {
     const { featuredTournament, tournaments, loading } = useTournaments();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+    const navigate = useNavigate();
 
     // Usar torneos activos para el carrusel
     const activeTournaments = tournaments.filter(t => t.is_active);
@@ -169,7 +171,16 @@ const TournamentCarousel = () => {
 
                                             {/* Botones de acción */}
                                             <div className="flex flex-wrap gap-4">
-                                                <button className="px-6 py-3 bg-gradient-to-r from-lol-gold to-yellow-600 text-black font-bold rounded-lg hover:from-yellow-500 hover:to-yellow-400 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-yellow-500/30 flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        // Redirige a /tournaments/{id}
+                                                        // Si el torneo está "published" añadimos ?action=register para diferenciar la intención
+                                                        const url = `/tournaments/${tournament.id}${tournament.status === 'published' ? '?action=register' : ''}`;
+                                                        navigate(url);
+                                                    }}
+                                                    className="px-6 py-3 bg-gradient-to-r from-lol-gold to-yellow-600 text-black font-bold rounded-lg hover:from-yellow-500 hover:to-yellow-400 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl hover:shadow-yellow-500/30 flex items-center gap-2"
+                                                >
                                                     <Play className="w-5 h-5" />
                                                     {tournament.status === 'published' ? 'Inscribirse Ahora' : 'Ver Detalles'}
                                                 </button>
