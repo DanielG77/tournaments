@@ -73,8 +73,6 @@ const TournamentCard = ({ tournament }) => {
     const navigate = useNavigate();
     const theme = getGameTheme(tournament.name);
 
-
-    // Formatear fechas
     const startDate = tournament.start_at ? new Date(tournament.start_at) : null;
     const endDate = tournament.end_at ? new Date(tournament.end_at) : null;
     const isActive = tournament.is_active;
@@ -110,9 +108,9 @@ const TournamentCard = ({ tournament }) => {
                                 </span>
                             )}
                         </div>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(tournament.status)}`}>
+                        {/* <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(tournament.status)}`}>
                             {getStatusText(tournament.status)}
-                        </span>
+                        </span> */}
                     </div>
                     <Gamepad2 className="w-8 h-8 text-gray-500" />
                 </div>
@@ -199,7 +197,7 @@ const TournamentCard = ({ tournament }) => {
                     >
                         {tournament.status === 'published' ? 'Inscribirse' :
                             tournament.status === 'draft' ? 'Publicar' :
-                                tournament.status === 'ongoing' ? 'Ver Partidas' : 'Ver Resultados'}
+                                tournament.status === 'ongoing' ? 'Ver Partidas' : 'Ver Detalles'}
                     </button>
                 </div>
             </div>

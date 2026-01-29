@@ -32,7 +32,6 @@ async def put_review(participant_id: UUID, payload: RegistrationReviewIn, user_i
 
 
 
-
 @router.post("/tournaments/{tournament_id}/participants", response_model=RegistrationOut)
 async def post_participant(tournament_id: UUID, team_id: UUID, user_id: str = Depends(get_admin_user)):
     return await create_participant(tournament_id, team_id, user_id)

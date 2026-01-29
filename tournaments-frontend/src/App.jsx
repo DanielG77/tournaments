@@ -11,10 +11,10 @@ import Home from './pages/Home';
 import TournamentDetail from './pages/TournamentDetail';
 import PlayerDashboard from './pages/PlayerDashboard';
 import CoachDashboard from './pages/CoachDashboard';
-import CoachPlayersPage from './pages/CoachPlayersPage'; // Nueva importación
+import CoachPlayersPage from './pages/CoachPlayersPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
-import PokemonTeamManager from './pages/PokemonTeamManager';
+// import PokemonTeamManager from './pages/PokemonTeamManager'; Siguiente Implementacion
 
 function App() {
   return (
@@ -30,7 +30,6 @@ function App() {
                 <Route path="/tournaments/:id" element={<TournamentDetail />} />
                 <Route path="/login" element={<Login />} />
 
-                {/* Rutas protegidas */}
                 <Route path="/perfil/:id" element={
                   <ProtectedRoute>
                     <PlayerDashboard />
@@ -43,7 +42,6 @@ function App() {
                   </ProtectedRoute>
                 } />
 
-                {/* Nueva ruta para el listado de jugadores del coach */}
                 <Route path="/coach/:id/players" element={
                   <ProtectedRoute role="coach">
                     <CoachPlayersPage />

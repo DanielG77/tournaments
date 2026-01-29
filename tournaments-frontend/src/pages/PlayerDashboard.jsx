@@ -193,7 +193,7 @@ export default function PlayerDashboard() {
                         <div>
                             <h3 className="text-xl font-bold text-white">Mis Equipos</h3>
                             <p className="text-sm text-slate-400 mt-1">
-                                Gestiona tus equipos de Pokémon
+                                Gestiona tus equipos Con tus Jugadores
                             </p>
                         </div>
                         <span className="px-3 py-1 bg-indigo-900/40 text-indigo-300 text-sm rounded-full">
@@ -206,7 +206,7 @@ export default function PlayerDashboard() {
                             <div className="text-5xl mb-4">🏆</div>
                             <h3 className="text-lg font-medium text-white mb-2">No tienes equipos aún</h3>
                             <p className="text-slate-400 max-w-md mx-auto">
-                                Crea tu primer equipo para comenzar a armar tu equipo de Pokémon.
+                                Busca Unirte A algun Equipo.
                             </p>
                         </div>
                     ) : (

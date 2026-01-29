@@ -195,7 +195,7 @@ export default function AuthPage() {
                         >
                             <option value="player">Jugador</option>
                             <option value="coach">Coach</option>
-                            <option value="admin">Admin</option>
+                            {/* <option value="admin">Admin</option> */}
                         </select>
                     </label>
 

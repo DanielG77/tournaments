@@ -6,8 +6,6 @@ import {
     adminPlayersAPI
 } from '../services/adminApi';
 
-// AdminDashboard.jsx - panelized admin UI that uses most admin endpoints
-// Single-file component for quick integration. Tailwind utility classes used.
 function fmtDate(d) {
     if (!d) return '';
     try {
@@ -19,25 +17,20 @@ function fmtDate(d) {
 
 
 export default function AdminDashboard() {
-    // Data
     const [tournaments, setTournaments] = useState([]);
     const [teams, setTeams] = useState([]);
     const [registrations, setRegistrations] = useState([]);
     const [players, setPlayers] = useState([]);
 
-    // Local UI state
     const [loading, setLoading] = useState(false);
     const [activePanel, setActivePanel] = useState('tournaments');
 
-    // Tournaments form state
     const [editingTournament, setEditingTournament] = useState(null);
     const [tForm, setTForm] = useState({ name: '', description: '' });
 
-    // Team member form
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [memberToAdd, setMemberToAdd] = useState({ userId: '', role: 'member' });
 
-    // Registrations filter
     const [regStatusFilter, setRegStatusFilter] = useState('pending');
 
     useEffect(() => {
@@ -59,7 +52,6 @@ export default function AdminDashboard() {
             setPlayers(pList || []);
         } catch (err) {
             console.error('Error loading admin data', err);
-            // In a real app show a toast / user-friendly message
         } finally {
             setLoading(false);
         }
@@ -95,6 +87,7 @@ export default function AdminDashboard() {
     }
 
     async function deleteTournament(id) {
+
         if (!confirm('¿Eliminar torneo? Esta acción es irreversible.')) return;
         try {
             await adminTournamentsAPI.delete(id);
@@ -108,7 +101,7 @@ export default function AdminDashboard() {
     async function openTeam(team) {
         try {
             setLoading(true);
-            const fullTeam = await adminTeamsAPI.getTeam(team.id); // <-- Trae miembros
+            const fullTeam = await adminTeamsAPI.getTeam(team.id);
             if (!fullTeam) {
                 console.warn('Team not found', team.id);
                 setSelectedTeam(null);
@@ -130,10 +123,8 @@ export default function AdminDashboard() {
         if (!selectedTeam) return;
         try {
             await adminTeamsAPI.addMember(selectedTeam.id, memberToAdd.userId, memberToAdd.role);
-            // Re-fetch team list (or ideally fetch single team)
             const updatedTeams = await adminTeamsAPI.list();
             setTeams(updatedTeams || []);
-            // reset
             setMemberToAdd({ userId: '', role: 'member' });
         } catch (err) {
             console.error('Error adding member', err);
@@ -198,16 +189,13 @@ export default function AdminDashboard() {
 
         try {
             setLoading(true);
-            // Llamada al backend para cambiar el status
             await adminTeamsAPI.updateMemberStatus(teamId, userId, newStatus);
 
-            // Refrescar solo el equipo seleccionado
             if (selectedTeam && selectedTeam.id === teamId) {
                 const fullTeam = await adminTeamsAPI.getTeam(teamId);
                 setSelectedTeam(fullTeam || null);
             }
 
-            // Opcional: refrescar lista de equipos si necesitas actualizar conteos
             const updatedTeams = await adminTeamsAPI.list();
             setTeams(updatedTeams || []);
         } catch (err) {
@@ -337,7 +325,6 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
 
-                                        {/* MEMBERS LIST - only visible if selectedTeam matches */}
                                         {selectedTeam?.id === team.id && (
                                             <div className="mt-4 border-t border-gray-700 pt-3">
                                                 <h4 className="font-semibold mb-2">
@@ -376,7 +363,6 @@ export default function AdminDashboard() {
                                                                             </button>
                                                                         </>
                                                                     )}
-                                                                    {/* show remove always */}
                                                                     <button
                                                                         onClick={() => removeMember(team.id, m.user_id)}
                                                                         className="px-2 py-1 bg-gray-700 rounded"

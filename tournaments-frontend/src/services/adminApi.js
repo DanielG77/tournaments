@@ -3,7 +3,6 @@ import api from './api';
 // ---- TOURNAMENTS ----
 export const adminTournamentsAPI = {
     list: (skip = 0, limit = 50) =>
-        // api.get('/admin/tournaments/', { params: { skip, limit } }).then(r => r.data),
         api.get('/admin/tournaments').then(r => r.data),
 
     get: (id) =>
@@ -25,13 +24,11 @@ export const adminTeamsAPI = {
         const res = await api.get('/admin/teams/');
         return res.data;
     },
-    // GET team detail
     getTeam: async (teamId) => {
         const res = await api.get(`/admin/teams/${teamId}`);
         return res.data;
     },
     addMember: async (teamId, userId, role = 'member') => {
-        // ahora enviamos body JSON
         const res = await api.post(`/admin/teams/${teamId}/members`, { user_id_to_add: userId, role });
         return res.data;
     },
@@ -52,13 +49,6 @@ export const adminTeamsAPI = {
     deactivate: (id) =>
         api.delete(`/admin/teams/${id}`),
 
-    // addMember: (teamId, userId, role = 'member') =>
-    //     api.post(`/admin/teams/${teamId}/members`, null, {
-    //         params: { user_id_to_add: userId, role }
-    //     }),
-
-    // removeMember: (teamId, memberId) =>
-    //     api.delete(`/admin/teams/${teamId}/members/${memberId}`)
 };
 
 // ---- REGISTRATIONS ----

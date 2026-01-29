@@ -28,7 +28,6 @@ export const TournamentProvider = ({ children }) => {
 
             setTournaments(data);
 
-            // Encontrar el torneo destacado: primero los activos, luego los publicados
             if (data.length > 0) {
                 const activeTournament = data.find(t =>
                     t.is_active && (t.status === 'published' || t.status === 'ongoing')
@@ -78,7 +77,6 @@ export const TournamentProvider = ({ children }) => {
         refreshTournaments: fetchTournaments,
         getTournamentById,
         updateTournamentStatus,
-        // Filtros útiles
         publishedTournaments: tournaments.filter(t => t.status === 'published'),
         ongoingTournaments: tournaments.filter(t => t.status === 'ongoing'),
         activeTournaments: tournaments.filter(t => t.is_active),

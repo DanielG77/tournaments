@@ -48,13 +48,13 @@ const Header = () => {
 
                     {/* Desktop Actions */}
                     <div className="hidden md:flex items-center gap-4">
-                        <button className="p-2 text-gray-400 hover:text-white transition-colors">
+                        {/* <button className="p-2 text-gray-400 hover:text-white transition-colors">
                             <Search className="w-5 h-5" />
                         </button>
                         <button className="p-2 text-gray-400 hover:text-white transition-colors relative">
                             <Bell className="w-5 h-5" />
                             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        </button> */}
 
                         {/* NEW: show Login link on desktop when user is NOT logged in */}
                         {!loading && !user && (
