@@ -1,27 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../services/api"; // asegúrate de la ruta
+import api from "../../services/api";
 import { CheckCircle, XCircle } from "lucide-react";
 
-/**
- * Props:
- *  - tournamentId (string, required)
- *  - onRegistered (optional) => callback después de registro correcto
- */
 const RegisterButton = ({ tournamentId, onRegistered }) => {
     const navigate = useNavigate();
 
-    // UI state
     const [showModal, setShowModal] = useState(false);
     const [teams, setTeams] = useState([]);
     const [loadingTeams, setLoadingTeams] = useState(false);
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
-    // toast-like state
-    const [notice, setNotice] = useState(null); // { type: 'success'|'error'|'info', msg: string }
+    const [notice, setNotice] = useState(null);
 
-    // lee user desde localStorage (esta app guarda user_data en login)
     const getUser = () => {
         try {
             const raw = localStorage.getItem("user_data");
@@ -33,15 +25,12 @@ const RegisterButton = ({ tournamentId, onRegistered }) => {
 
     const user = getUser();
 
-    // obtiene coachId con varios fallbacks
     const resolveCoachId = () => {
         if (!user) return localStorage.getItem("coach_test_id") || null;
         return user.id || user.user_id || localStorage.getItem("coach_test_id") || null;
     };
 
-    // Abrir modal -> fetch equipos elegibles para el torneo
     const openModal = async () => {
-        // if not authenticated -> redirect login
         if (!user) {
             navigate("/login");
             return;
@@ -73,16 +62,13 @@ const RegisterButton = ({ tournamentId, onRegistered }) => {
         setSelectedTeam(null);
 
         try {
-            // Nuevo endpoint que devuelve equipos elegibles para el torneo
             const res = await api.get(`/tournaments/${tournamentId}/coach/${coachId}/eligible-teams`);
             const payload = res.data || {};
 
-            // API devuelve { teams: [...], message?: '...' } o { teams: [] }
             const items = Array.isArray(payload) ? payload : (payload.teams || []);
             setTeams(items);
 
             if (!items || items.length === 0) {
-                // muestra mensaje explícito (backend puede devolver message)
                 const msg = payload.message || "Tus equipos ya están registrados o no tienes equipos.";
                 setNotice({ type: "info", msg });
             }
@@ -98,7 +84,6 @@ const RegisterButton = ({ tournamentId, onRegistered }) => {
     const closeModal = () => {
         setShowModal(false);
         setSelectedTeam(null);
-        // opcional: clear notice related to modal
     };
 
     const handleRegister = async () => {
@@ -127,7 +112,6 @@ const RegisterButton = ({ tournamentId, onRegistered }) => {
         }
     };
 
-    // render pequeño component de notificación
     const NoticeBox = ({ notice }) => {
         if (!notice) return null;
         const color =

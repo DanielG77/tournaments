@@ -10,7 +10,6 @@ const TournamentCarousel = () => {
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
     const navigate = useNavigate();
 
-    // Usar torneos activos para el carrusel
     const activeTournaments = tournaments.filter(t => t.is_active);
     console.log('Torneos activos para el carrusel:', activeTournaments);
     const nextSlide = () => {
@@ -174,8 +173,6 @@ const TournamentCarousel = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => {
-                                                        // Redirige a /tournaments/{id}
-                                                        // Si el torneo está "published" añadimos ?action=register para diferenciar la intención
                                                         const url = `/tournaments/${tournament.id}${tournament.status === 'published' ? '?action=register' : ''}`;
                                                         navigate(url);
                                                     }}
@@ -184,9 +181,9 @@ const TournamentCarousel = () => {
                                                     <Play className="w-5 h-5" />
                                                     {tournament.status === 'published' ? 'Inscribirse Ahora' : 'Ver Detalles'}
                                                 </button>
-                                                <button className="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 text-white font-bold rounded-lg border border-gray-600 hover:from-gray-600 hover:to-gray-700 transition-all duration-300">
+                                                {/* <button className="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 text-white font-bold rounded-lg border border-gray-600 hover:from-gray-600 hover:to-gray-700 transition-all duration-300">
                                                     Ver Reglas
-                                                </button>
+                                                </button> */}
                                             </div>
                                         </div>
                                     </div>

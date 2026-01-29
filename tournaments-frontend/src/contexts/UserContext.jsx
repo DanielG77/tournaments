@@ -21,12 +21,11 @@ export const UserProvider = ({ children }) => {
                 return;
             }
 
-            // Si no hay user_data, intenta /auth/me (si existe)
             const data = await authAPI.getMe();
             setUser(data);
         } catch (error) {
             console.log("No valid session found or failed to fetch user", error);
-            clearAuth(); // Limpia tokens si falla
+            clearAuth();
             setUser(null);
         } finally {
             setLoading(false);
@@ -55,7 +54,6 @@ export const UserProvider = ({ children }) => {
     const logout = async () => {
         await authAPI.logout();
         setUser(null);
-        // window.location.href = "/login";
     };
 
     return (

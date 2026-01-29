@@ -37,12 +37,10 @@ api.interceptors.request.use(
     (config) => {
         const url = config.url || "";
 
-        // 1) Add admin header for /admin routes
         if (ADMIN_USER_ID && url.includes("/admin")) {
             config.headers["x-user-id"] = ADMIN_USER_ID;
         }
 
-        // 2) Add access token if exists (except for auth public routes)
         const publicRoutes = ["/auth/login", "/auth/register", "/auth/refresh"];
         const isPublic = publicRoutes.some((route) => url.includes(route));
 
