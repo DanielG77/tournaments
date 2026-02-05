@@ -27,15 +27,15 @@ class TournamentCreate(TournamentBase):
 
 
 class TournamentUpdate(BaseModel):
-    name: Optional[str]
-    description: Optional[str]
-    images: Optional[List]
-    status: Optional[str]
-    start_at: Optional[datetime]
-    end_at: Optional[datetime]
-    price_client: Optional[float]
-    price_player: Optional[float]
-    is_active: Optional[bool]
+    name: Optional[str] = None
+    description: Optional[str] = None
+    images: Optional[List] = None
+    status: Optional[str] = None
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    price_client: Optional[float] = None
+    price_player: Optional[float] = None
+    is_active: Optional[bool] = None
 
 
 

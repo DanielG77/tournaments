@@ -69,5 +69,13 @@ export const adminPlayersAPI = {
         api.get('/admin/players/').then(r => r.data),
 
     get: (id) =>
-        api.get(`/admin/players/${id}`).then(r => r.data)
+        api.get(`/admin/players/${id}`).then(r => r.data),
+
+    // ⚡ Solo para actualizar la contraseña
+    updatePassword: (id, data) =>
+        api.put(`/admin/players/${id}/password`, data).then(r => {
+            // El backend devuelve 204 No Content, por eso retornamos null
+            if (r.status === 204) return null;
+            return r.data;
+        })
 };

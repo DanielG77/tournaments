@@ -8,6 +8,8 @@ class PlayerProfileBase(BaseModel):
 
 class PlayerProfileCreate(PlayerProfileBase):
     pass
+class PlayerProfileUpdate(PlayerProfileBase):
+    password: Optional[str] = None
 
 class PlayerProfileResponse(PlayerProfileBase):
     user_id: UUID

@@ -122,3 +122,23 @@ async def soft_delete_tournament(tournament_id: UUID) -> bool:
             tournament_id,
         )
         return bool(row)
+    
+async def delete_tournament(tournament_id: UUID) -> bool:
+    pool = await DatabaseConnection.get_pool()
+
+    async with pool.acquire() as conn:
+        # Primero verificar si existe
+        exists = await conn.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM tournaments WHERE id = $1)",
+            tournament_id,
+        )
+        
+        if not exists:
+            return False
+            
+        # Luego eliminar
+        await conn.execute(
+            "DELETE FROM tournaments WHERE id = $1",
+            tournament_id,
+        )
+        return True

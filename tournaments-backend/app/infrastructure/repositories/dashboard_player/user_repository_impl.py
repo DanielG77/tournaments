@@ -76,6 +76,18 @@ class UserRepositoryImpl(UserRepository):
                 user_id
             )
 
+    async def update_password(self, user_id: UUID, hashed_password: str) -> None:
+        """Actualiza la contraseña de un usuario"""
+        async with DatabaseConnection.get_connection() as conn:
+            await conn.execute(
+                """
+                UPDATE users 
+                SET password_hash = $1, updated_at = NOW()
+                WHERE id = $2
+                """,
+                hashed_password, user_id
+            )
+
 class PlayerProfileRepositoryImpl(PlayerProfileRepository):
     async def find_by_user_id(self, user_id: UUID) -> Optional[PlayerProfile]:
         async with DatabaseConnection.get_connection() as conn:

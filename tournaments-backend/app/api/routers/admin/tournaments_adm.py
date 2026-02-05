@@ -51,3 +51,11 @@ async def delete_tournament(tournament_id: UUID, user_id: str = Depends(get_admi
     if not ok:
         raise HTTPException(status_code=404, detail="Tournament not found")
     return None
+
+
+@router.delete("/end/{tournament_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_def_tournament(tournament_id: UUID, user_id: str = Depends(get_admin_user)):
+    ok = await svc_soft_delete_tournament(tournament_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    return None

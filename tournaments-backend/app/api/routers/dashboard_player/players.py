@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Path
 from application.schemas.dashboard_player.player import (
     UserCreate, UserResponse, PlayerProfileCreate, 
-    PlayerProfileResponse, PlayerDashboardResponse
+    PlayerProfileResponse, PlayerDashboardResponse, PlayerProfileUpdate
 )
 from application.schemas.dashboard_player.team import TeamResponse, UserTeamResponse
 from application.schemas.dashboard_player.game_account import GameAccountResponse
@@ -14,6 +14,8 @@ from infrastructure.repositories.dashboard_player.user_repository_impl import (
 )
 from infrastructure.repositories.dashboard_player.team_repository_impl import TeamRepositoryImpl
 from infrastructure.repositories.dashboard_player.game_account_repository_impl import GameAccountRepositoryImpl
+from fastapi.security import OAuth2PasswordBearer
+from application.services.auth_service import AuthService
 
 router = APIRouter(prefix="/players", tags=["players"])
 
@@ -71,22 +73,23 @@ async def get_my_dashboard(
             detail=str(e)
         )
 
-@router.put("/me/profile", response_model=PlayerProfileResponse)
-async def update_my_profile(
-    profile_data: PlayerProfileCreate,
-    current_user_id: UUID = Depends(get_current_user_id),
+@router.put("/{user_id}/profile", response_model=PlayerProfileResponse)
+async def update_player_profile(
+    
+
+    profile_data: PlayerProfileUpdate,
+    user_id: UUID = Path(..., description="Player UUID"),
     service: PlayerService = Depends(get_player_service)
 ):
-    """
-    Actualizar el perfil del jugador actualmente autenticado.
-    """
+    
+    if profile_data.password:
+        await AuthService.update_password(user_id, profile_data.password)
+
     try:
-        return await service.update_player_profile(current_user_id, profile_data)
+        return await service.update_player_profile(user_id, profile_data)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
 
 @router.get("/me/teams", response_model=List[UserTeamResponse])
 async def get_my_teams(

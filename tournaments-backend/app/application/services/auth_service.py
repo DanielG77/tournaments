@@ -169,4 +169,17 @@ class AuthService:
                 "refresh_jti": new_jti,
                 "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
             }
+    @staticmethod
+    async def update_password(user_id: str, new_password: str):
+        """Actualiza la contraseña de un usuario"""
+        pwd_hash = hash_password(new_password)
+        async with DatabaseConnection.get_connection() as conn:
+            await conn.execute(
+                "UPDATE users SET password_hash = $1 WHERE id = $2",
+                pwd_hash, user_id
+            )
 
+    @staticmethod
+    def hash_password(password: str) -> str:
+        """Hashea una contraseña (método síncrono)"""
+        return hash_password(password)

@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
@@ -7,6 +6,7 @@ import { useParams, Link } from 'react-router-dom';
   - ID dinámico desde URL o input
   - Guardado en localStorage
   - Peticiones con ID dinámico
+  - Añadido formulario para editar perfil (nickname + password)
 */
 
 function fetchJSON(url, opts) {
@@ -27,6 +27,12 @@ export default function PlayerDashboard() {
     const [gameAccounts, setGameAccounts] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    // Perfil - edición
+    const [showEditProfile, setShowEditProfile] = useState(false);
+    const [profileForm, setProfileForm] = useState({ nickname: '', password: '' });
+    const [editingProfile, setEditingProfile] = useState(false);
+    const [profileMsg, setProfileMsg] = useState(null);
 
     // Crear equipo form
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -106,17 +112,6 @@ export default function PlayerDashboard() {
             // Por ahora, mostramos un mensaje de que no está implementado
             throw new Error('Endpoint para crear equipos no implementado en el backend');
 
-            // Si tuvieras el endpoint, sería algo como:
-            // const res = await fetchJSON(`http://localhost:8000/players/${playerId}/teams`, {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ name: newTeamName.trim() })
-            // });
-            // const created = res;
-            // setTeams((s) => [created, ...s]);
-            // setNewTeamName('');
-            // setShowCreateForm(false);
-
         } catch (err) {
             console.error('createTeam', err);
             const detail = err?.response?.data?.detail || err.message;
@@ -133,6 +128,72 @@ export default function PlayerDashboard() {
         }
         localStorage.setItem('player_test_id', playerId);
         fetchAll(playerId);
+    }
+
+    // --- Perfil: acciones de edición ---
+    function openEditProfile() {
+        setProfileMsg(null);
+        setProfileForm({
+            nickname: userData?.profile?.nickname || userData?.user?.email?.split('@')[0] || '',
+            password: ''
+        });
+        setShowEditProfile(true);
+        // optionally scroll into view or focus
+    }
+
+    function cancelEditProfile() {
+        setShowEditProfile(false);
+        setProfileForm({ nickname: '', password: '' });
+        setProfileMsg(null);
+    }
+
+    async function saveProfile() {
+        if (!isPlayerIdValid()) {
+            setProfileMsg('Player ID no válido.');
+            return;
+        }
+
+        const nickname = (profileForm.nickname || '').trim();
+        const password = profileForm.password || '';
+
+        if (!nickname) {
+            setProfileMsg('El nickname no puede estar vacío.');
+            return;
+        }
+        if (password && password.length < 6) {
+            setProfileMsg('La contraseña debe tener al menos 6 caracteres si la vas a cambiar.');
+            return;
+        }
+
+        setEditingProfile(true);
+        setProfileMsg(null);
+        try {
+            const payload = { nickname };
+            if (password) payload.password = password; // backend debería hashear
+
+            const res = await fetchJSON(`http://localhost:8000/players/${playerId}/profile`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            // Actualizar UI: dependiendo de lo que devuelva el backend
+            // aquí asumimos que devuelve el profile actualizado
+            setUserData((prev) => ({
+                ...prev,
+                profile: { ...prev?.profile, ...(res || payload) }
+            }));
+
+            setProfileMsg('Perfil actualizado correctamente.');
+            setShowEditProfile(false);
+            setProfileForm({ nickname: '', password: '' });
+        } catch (err) {
+            console.error('saveProfile error', err);
+            const detail = err?.response?.data?.detail || err.message || 'Error desconocido';
+            setProfileMsg(`No se pudo actualizar el perfil: ${detail}`);
+        } finally {
+            setEditingProfile(false);
+        }
     }
 
     function ProfileCard() {
@@ -181,6 +242,72 @@ export default function PlayerDashboard() {
                         </div>
                     </div>
                 </div>
+
+                <div className="mt-6 flex items-center gap-3">
+                    <button
+                        onClick={openEditProfile}
+                        className="px-3 py-2 bg-indigo-600 rounded-lg text-sm hover:bg-indigo-700 transition"
+                    >
+                        ✎ Editar perfil
+                    </button>
+                    <button
+                        onClick={() => fetchAll()}
+                        className="px-3 py-2 bg-slate-700 rounded-lg text-sm hover:bg-slate-600 transition"
+                    >
+                        ⟳ Refrescar
+                    </button>
+                </div>
+
+                {/* Mensaje de estado del perfil */}
+                {profileMsg && (
+                    <div className="mt-4 text-sm text-slate-200 bg-slate-900/40 p-3 rounded">
+                        {profileMsg}
+                    </div>
+                )}
+
+                {/* Formulario de edición (modal-like dentro del card) */}
+                {showEditProfile && (
+                    <div className="mt-4 p-4 bg-slate-900/60 rounded-lg border border-slate-700">
+                        <h4 className="text-white font-semibold mb-2">Estás editando: el perfil</h4>
+                        <p className="text-sm text-slate-400 mb-4">Nota: la contraseña será enviada al servidor y debe ser hasheada por el backend.</p>
+
+                        <div className="grid gap-3">
+                            <label className="text-sm text-slate-300">Nickname</label>
+                            <input
+                                value={profileForm.nickname}
+                                onChange={(e) => setProfileForm((s) => ({ ...s, nickname: e.target.value }))}
+                                placeholder="Nickname"
+                                className="bg-slate-800 px-3 py-2 rounded-lg text-sm border border-slate-700 focus:border-indigo-500 focus:outline-none"
+                            />
+
+                            <label className="text-sm text-slate-300">Nueva contraseña (opcional)</label>
+                            <input
+                                value={profileForm.password}
+                                type="password"
+                                onChange={(e) => setProfileForm((s) => ({ ...s, password: e.target.value }))}
+                                placeholder="Dejar vacío para mantener la contraseña actual"
+                                className="bg-slate-800 px-3 py-2 rounded-lg text-sm border border-slate-700 focus:border-indigo-500 focus:outline-none"
+                            />
+
+                            <div className="flex gap-2 mt-2">
+                                <button
+                                    onClick={saveProfile}
+                                    disabled={editingProfile}
+                                    className="px-4 py-2 bg-green-600 rounded-lg text-sm hover:bg-green-700 transition disabled:opacity-60"
+                                >
+                                    Guardar
+                                </button>
+                                <button
+                                    onClick={cancelEditProfile}
+                                    disabled={editingProfile}
+                                    className="px-4 py-2 bg-red-700 rounded-lg text-sm hover:bg-red-800 transition disabled:opacity-60"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
